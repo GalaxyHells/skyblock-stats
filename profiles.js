@@ -21,7 +21,7 @@ async function fetchPlayerProfile(username) {
 
     try {
         // Agora apontamos para o seu servidor Go
-        const response = await fetch(`http://localhost:8080/profile?id=${username}&key=${API_KEY}`);
+        const response = await fetch(`https://skyblock-stats.onrender.com/profile?id=${username}&key=${API_KEY}`);
         
         if (!response.ok) throw new Error("Jogador não encontrado ou erro no proxy");
 
