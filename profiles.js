@@ -19,8 +19,8 @@ async function fetchPlayerProfile(username) {
     const API_KEY = "UNLIMITED_KEY";
     container.innerHTML = '<div class="loader">Consultando proxy local...</div>';
 
-    username.toLowerCase()
-    
+    username = username.toLowerCase()
+
     try {
         // Agora apontamos para o seu servidor Go
         const response = await fetch(`https://skyblock-stats.onrender.com/profile?id=${username}&key=${API_KEY}`);
