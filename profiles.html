@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyBlock | Explorador de Perfis</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="profiles.css">
+</head>
+<body>
+
+    <header>
+        <nav class="container">
+            <div class="logo">SKY<span>BLOCK</span></div>
+            <ul class="nav-links">
+                <li><a href="index.html">Início</a></li>
+                <li><a href="#">Wiki</a></li>
+                <li><a href="profiles.html" class="active">Perfis</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="search-section">
+            <h1>Consultar Jogador</h1>
+            <p>Veja os atributos, coleções e progresso de qualquer jogador.</p>
+            <div class="search-box">
+                <input type="text" id="player-search" placeholder="Digite o Nick (Ex: GalaxyHells)">
+                <button id="search-btn">BUSCAR</button>
+            </div>
+        </section>
+
+        <div class="filter-bar">
+            <span>Mais buscados:</span>
+            <button class="filter-tag">Top Skills</button>
+            <button class="filter-tag">Dungeons</button>
+            <button class="filter-tag">Ricos</button>
+        </div>
+
+        <div class="profiles-grid" id="profiles-container">
+            </div>
+    </main>
+
+    <script src="profiles.js"></script>
+</body>
+</html>

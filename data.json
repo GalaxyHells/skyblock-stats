@@ -1,0 +1,567 @@
+{
+    "activeProfile": 0,
+    "profiles": [
+        {
+            "profile_name": "neomin",
+            "experience": 142,
+            "creation_date": 0,
+            "island_redirect": "1049070150",
+            "settings_model": {
+                "rare_drop_check": false,
+                "item_pickup": true,
+                "global_chat": true
+            },
+            "data_model": {
+                "pet_model": {
+                    "active_pet": {
+                        "petType": "ENDERMAN",
+                        "rarityType": "COMMON",
+                        "level": 12,
+                        "exp": 75,
+                        "id": "6d99aa68-ed2f-4821-a8fb-96659f7dfce7"
+                    },
+                    "upgrade_data": {
+                        "active": false,
+                        "placedAt": 0,
+                        "finishAt": 0
+                    },
+                    "stored_pets": [
+                        {
+                            "rarityType": "RARE",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "59592ccf-f375-423b-ace5-51de94ede58c"
+                        },
+                        {
+                            "rarityType": "EPIC",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "b519a183-e063-459d-85b2-a628985d4067"
+                        },
+                        {
+                            "petType": "DRAGAO_DO_FIM",
+                            "petItem": "GARRAS_DO_DRAGAO",
+                            "rarityType": "LEGENDARY",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "7ff29505-96b6-4b1e-a75b-2ae3e30c9bc0"
+                        },
+                        {
+                            "petType": "CUBO_DE_MAGMA",
+                            "rarityType": "EPIC",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "fdc75100-6e3a-4ed0-a399-5673a485fd81"
+                        },
+                        {
+                            "petType": "VACA_DE_COGUMELO",
+                            "rarityType": "LEGENDARY",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "b1dacd1e-ba25-4d43-849b-3233b968ed48"
+                        },
+                        {
+                            "petType": "PINTINHO",
+                            "rarityType": "RARE",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "168ef4a2-41f9-4b12-808c-82db5b789608"
+                        },
+                        {
+                            "petType": "CRYON",
+                            "rarityType": "LEGENDARY",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "0404a560-a6fd-4650-90e2-92c333295457"
+                        },
+                        {
+                            "petType": "VACA",
+                            "rarityType": "EPIC",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "d3c685a4-7b10-441b-a278-1247c32c8064"
+                        },
+                        {
+                            "petType": "ABELHA",
+                            "rarityType": "LEGENDARY",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "7550baa0-822f-46ae-8624-d5da2d6f9719"
+                        },
+                        {
+                            "petType": "ELEFANTE",
+                            "rarityType": "LEGENDARY",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "075e015d-9f74-4976-925e-b230bb7a0938"
+                        },
+                        {
+                            "petType": "ESQUELETO",
+                            "rarityType": "LEGENDARY",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "ae1a5b76-f2fd-4112-8943-e86dab3836cd"
+                        },
+                        {
+                            "petType": "ESQUELETO_WITHER",
+                            "rarityType": "LEGENDARY",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "a421f506-3c35-4fbc-8b48-8211b6c0921f"
+                        },
+                        {
+                            "petType": "ENDERMAN",
+                            "rarityType": "LEGENDARY",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "4d72e151-6c58-4952-946f-0f352882b579"
+                        },
+                        {
+                            "petType": "PORCO_ZUMBI",
+                            "rarityType": "LEGENDARY",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "65aa8bec-4996-4d20-808c-ad47d659756f"
+                        },
+                        {
+                            "petType": "VACA_DOURADA",
+                            "rarityType": "LEGENDARY",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "a2cc5251-f120-471b-b2be-2d33b14f026e"
+                        },
+                        {
+                            "petType": "ABELHA",
+                            "rarityType": "UNCOMMON",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "f8ad5b4a-587f-45fe-a0a6-0c2eac582541"
+                        },
+                        {
+                            "petType": "COELHO",
+                            "rarityType": "EPIC",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "15eb7bb5-b44c-4336-8697-dfe2dfffa8f9"
+                        },
+                        {
+                            "petType": "PINTINHO",
+                            "rarityType": "UNCOMMON",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "1d198ff1-557f-4e65-9c7e-0d497b21a7ff"
+                        },
+                        {
+                            "petType": "ENDERMAN",
+                            "rarityType": "COMMON",
+                            "level": 12,
+                            "exp": 75,
+                            "id": "6d99aa68-ed2f-4821-a8fb-96659f7dfce7"
+                        }
+                    ],
+                    "incubated_eggs": [],
+                    "incubating": 0,
+                    "visibility_state": 0
+                },
+                "bank_model": {
+                    "stored": 0,
+                    "purse": 6913598.4375,
+                    "next_interest": 1771472586862,
+                    "last_interest": 1771236321233,
+                    "account": "Conta_Inicial",
+                    "history": [
+                        "\u00a7a+ \u00a760.0 \u00a78(Rendimento)"
+                    ],
+                    "remote_bank": {
+                        "level": 1,
+                        "cooldown": 0
+                    }
+                },
+                "skills_model": {
+                    "level": {
+                        "FORAGING_SKILL": 0,
+                        "COMBAT_SKILL": 6,
+                        "MINING_SKILL": 10,
+                        "FISHING_SKILL": 0,
+                        "FARMING_SKILL": 5,
+                        "ENCHANTING_SKILL": 0
+                    },
+                    "exp": {
+                        "FORAGING_SKILL": 0,
+                        "COMBAT_SKILL": 6492.5,
+                        "MINING_SKILL": 28437,
+                        "FISHING_SKILL": 0,
+                        "FARMING_SKILL": 4022,
+                        "ENCHANTING_SKILL": 0
+                    }
+                },
+                "collections_model": {
+                    "collection_level": {
+                        "GUN_POWDER": 0,
+                        "SPRUCE_LOG": 0,
+                        "IRON_INGOT": 0,
+                        "QUARTZ": 0,
+                        "POTATO_ITEM": 3,
+                        "PORK": 0,
+                        "GRAVEL": 0,
+                        "MAGMA_CREAM": 0,
+                        "DIAMOND": 3,
+                        "SUGAR_CANE": 1,
+                        "GHAST_TEAR": 0,
+                        "GOLD_INGOT": 0,
+                        "SEEDS": 1,
+                        "ENDER_STONE": 0,
+                        "SPIDER_EYE": 0,
+                        "CARROT_ITEM": 6,
+                        "SAND": 0,
+                        "WHEAT": 3,
+                        "RABBIT_RAW": 0,
+                        "ACACIA_LOG": 0,
+                        "MUSHROOM_ITEM": 0,
+                        "EMERALD": 9,
+                        "BLAZE_ROD": 0,
+                        "LEATHER": 0,
+                        "CHICKEN_RAW": 0,
+                        "OAK_LOG": 0,
+                        "ROTTEN_FLESH": 0,
+                        "SLIME_BALL": 0,
+                        "ICE": 0,
+                        "CACTUS": 0,
+                        "NETHERRACK": 0,
+                        "COCOA_ITEM": 0,
+                        "LAPIS_LAZULI": 0,
+                        "OBSIDIAN": 0,
+                        "MELON_BLOCK": 0,
+                        "FEATHER": 0,
+                        "JUNGLE_LOG": 0,
+                        "STRING": 0,
+                        "COAL_ORE": 0,
+                        "REDSTONE": 9,
+                        "GLOWSTONE": 0,
+                        "DARK_OAK": 0,
+                        "PUMPKIN": 0,
+                        "NETHER_STALK": 2,
+                        "COBBLESTONE": 1,
+                        "BIRCH_LOG": 0,
+                        "ENDER_PEARL": 6,
+                        "BONE": 0
+                    },
+                    "collection_exp": {
+                        "GUN_POWDER": 0,
+                        "SPRUCE_LOG": 5,
+                        "IRON_INGOT": 0,
+                        "QUARTZ": 0,
+                        "POTATO_ITEM": 912,
+                        "PORK": 9,
+                        "GRAVEL": 0,
+                        "MAGMA_CREAM": 0,
+                        "DIAMOND": 186,
+                        "SUGAR_CANE": 51,
+                        "GHAST_TEAR": 0,
+                        "GOLD_INGOT": 0,
+                        "SEEDS": 27,
+                        "ENDER_STONE": 0,
+                        "SPIDER_EYE": 17,
+                        "CARROT_ITEM": 9627,
+                        "SAND": 12,
+                        "WHEAT": 50,
+                        "RABBIT_RAW": 0,
+                        "ACACIA_LOG": 0,
+                        "MUSHROOM_ITEM": 12,
+                        "EMERALD": 56333277,
+                        "BLAZE_ROD": 0,
+                        "LEATHER": 0,
+                        "CHICKEN_RAW": 0,
+                        "OAK_LOG": 1,
+                        "ROTTEN_FLESH": 0,
+                        "SLIME_BALL": 0,
+                        "ICE": 0,
+                        "CACTUS": 12,
+                        "NETHERRACK": 0,
+                        "COCOA_ITEM": 0,
+                        "LAPIS_LAZULI": 0,
+                        "OBSIDIAN": 0,
+                        "MELON_BLOCK": 0,
+                        "FEATHER": 0,
+                        "JUNGLE_LOG": 0,
+                        "STRING": 3,
+                        "COAL_ORE": 0,
+                        "REDSTONE": 11356,
+                        "GLOWSTONE": 0,
+                        "DARK_OAK": 0,
+                        "PUMPKIN": 0,
+                        "NETHER_STALK": 385,
+                        "COBBLESTONE": 361,
+                        "BIRCH_LOG": 0,
+                        "ENDER_PEARL": 320,
+                        "BONE": 3
+                    }
+                },
+                "regions_model": {
+                    "region": "VILAREJO",
+                    "lastRegion": "VILAREJO",
+                    "discovered_regions": {
+                        "GRANDE_MINA": true,
+                        "NINHO_DO_DRAGAO": true,
+                        "CEMITERIO": false,
+                        "ILHA_NATALINA": false,
+                        "MINA_DE_LAPIS": true,
+                        "MINA_DE_ESMERALDA": false,
+                        "FLORESTA_DE_TAIGA": false,
+                        "MINA_DE_OURO": true,
+                        "RANCHO": true,
+                        "FAZENDA": true,
+                        "MINA_DE_REDSTONE": true,
+                        "NETHER": true,
+                        "VILAREJO": true,
+                        "LABORATORIO": false,
+                        "NAVIO_PIRATA": false,
+                        "BANCO": true,
+                        "FLORESTA_DE_ACACIA": false,
+                        "FLORESTA_DE_CARVALHO": true,
+                        "CASA_DA_BRUXA": false,
+                        "FLORESTA_DE_CARVALHO_ESCURO": false,
+                        "COVIL_DAS_ARANHAS": false,
+                        "CAVERNA_MAGICA": true,
+                        "FLORESTA_DE_BETULA": false,
+                        "CASA_DE_LEILOES": true,
+                        "FERRARIA": true,
+                        "MINA_DE_OBSIDIANA": false,
+                        "FORTALEZA_DO_NETHER": true,
+                        "FLORESTA_DE_SELVA": false,
+                        "CANION": true,
+                        "MINA_DE_CARVAO": false,
+                        "MINA_DE_DIAMANTE": false,
+                        "O_FIM": true
+                    }
+                },
+                "objectives_model": {
+                    "objectives": []
+                },
+                "treasure_model": {
+                    "collected": 0,
+                    "treasures": []
+                }
+            },
+            "temporary_effects": [],
+            "temporary_stats": []
+        },
+        {
+            "profile_name": "Bode",
+            "experience": 0,
+            "creation_date": 1772407445098,
+            "island_redirect": "36c71cfde3e74696",
+            "settings_model": {
+                "rare_drop_check": false,
+                "item_pickup": true,
+                "global_chat": true
+            },
+            "data_model": {
+                "pet_model": {
+                    "active_pet": {
+                        "petType": "ENDERMAN",
+                        "rarityType": "RARE",
+                        "level": 100,
+                        "exp": 0,
+                        "id": "ed40526c-5c15-4070-98c5-f231dec692e4"
+                    },
+                    "upgrade_data": {
+                        "active": false,
+                        "placedAt": 0,
+                        "finishAt": 0
+                    },
+                    "stored_pets": [
+                        {
+                            "petType": "ENDERMAN",
+                            "rarityType": "RARE",
+                            "level": 100,
+                            "exp": 0,
+                            "id": "ed40526c-5c15-4070-98c5-f231dec692e4"
+                        }
+                    ],
+                    "incubated_eggs": [],
+                    "incubating": 0,
+                    "visibility_state": 0
+                },
+                "bank_model": {
+                    "stored": 0,
+                    "purse": 0,
+                    "next_interest": 1772537045072,
+                    "last_interest": 1772407445072,
+                    "account": "Conta_Inicial",
+                    "history": [],
+                    "remote_bank": {
+                        "level": 1,
+                        "cooldown": 0
+                    }
+                },
+                "skills_model": {
+                    "level": {
+                        "FORAGING_SKILL": 0,
+                        "COMBAT_SKILL": 0,
+                        "MINING_SKILL": 0,
+                        "FISHING_SKILL": 0,
+                        "FARMING_SKILL": 0,
+                        "ENCHANTING_SKILL": 0
+                    },
+                    "exp": {
+                        "FORAGING_SKILL": 0,
+                        "COMBAT_SKILL": 0,
+                        "MINING_SKILL": 0,
+                        "FISHING_SKILL": 0,
+                        "FARMING_SKILL": 0,
+                        "ENCHANTING_SKILL": 0
+                    }
+                },
+                "collections_model": {
+                    "collection_level": {
+                        "GUN_POWDER": 0,
+                        "SPRUCE_LOG": 0,
+                        "IRON_INGOT": 0,
+                        "QUARTZ": 0,
+                        "POTATO_ITEM": 0,
+                        "PORK": 0,
+                        "GRAVEL": 0,
+                        "MAGMA_CREAM": 0,
+                        "DIAMOND": 0,
+                        "SUGAR_CANE": 0,
+                        "GHAST_TEAR": 0,
+                        "GOLD_INGOT": 0,
+                        "SEEDS": 0,
+                        "ENDER_STONE": 0,
+                        "SPIDER_EYE": 0,
+                        "CARROT_ITEM": 0,
+                        "SAND": 0,
+                        "WHEAT": 0,
+                        "RABBIT_RAW": 0,
+                        "ACACIA_LOG": 0,
+                        "MUSHROOM_ITEM": 0,
+                        "EMERALD": 0,
+                        "BLAZE_ROD": 0,
+                        "LEATHER": 0,
+                        "CHICKEN_RAW": 0,
+                        "OAK_LOG": 0,
+                        "ROTTEN_FLESH": 0,
+                        "SLIME_BALL": 0,
+                        "ICE": 0,
+                        "CACTUS": 0,
+                        "NETHERRACK": 0,
+                        "COCOA_ITEM": 0,
+                        "LAPIS_LAZULI": 0,
+                        "OBSIDIAN": 0,
+                        "MELON_BLOCK": 0,
+                        "FEATHER": 0,
+                        "JUNGLE_LOG": 0,
+                        "STRING": 0,
+                        "COAL_ORE": 0,
+                        "REDSTONE": 0,
+                        "GLOWSTONE": 0,
+                        "DARK_OAK": 0,
+                        "PUMPKIN": 0,
+                        "NETHER_STALK": 0,
+                        "COBBLESTONE": 0,
+                        "BIRCH_LOG": 0,
+                        "ENDER_PEARL": 0,
+                        "BONE": 0
+                    },
+                    "collection_exp": {
+                        "GUN_POWDER": 0,
+                        "SPRUCE_LOG": 0,
+                        "IRON_INGOT": 0,
+                        "QUARTZ": 0,
+                        "POTATO_ITEM": 0,
+                        "PORK": 0,
+                        "GRAVEL": 0,
+                        "MAGMA_CREAM": 0,
+                        "DIAMOND": 0,
+                        "SUGAR_CANE": 0,
+                        "GHAST_TEAR": 0,
+                        "GOLD_INGOT": 0,
+                        "SEEDS": 0,
+                        "ENDER_STONE": 0,
+                        "SPIDER_EYE": 0,
+                        "CARROT_ITEM": 0,
+                        "SAND": 0,
+                        "WHEAT": 0,
+                        "RABBIT_RAW": 0,
+                        "ACACIA_LOG": 0,
+                        "MUSHROOM_ITEM": 0,
+                        "EMERALD": 0,
+                        "BLAZE_ROD": 0,
+                        "LEATHER": 0,
+                        "CHICKEN_RAW": 0,
+                        "OAK_LOG": 0,
+                        "ROTTEN_FLESH": 0,
+                        "SLIME_BALL": 0,
+                        "ICE": 0,
+                        "CACTUS": 0,
+                        "NETHERRACK": 0,
+                        "COCOA_ITEM": 0,
+                        "LAPIS_LAZULI": 0,
+                        "OBSIDIAN": 0,
+                        "MELON_BLOCK": 0,
+                        "FEATHER": 0,
+                        "JUNGLE_LOG": 0,
+                        "STRING": 0,
+                        "COAL_ORE": 0,
+                        "REDSTONE": 0,
+                        "GLOWSTONE": 0,
+                        "DARK_OAK": 0,
+                        "PUMPKIN": 0,
+                        "NETHER_STALK": 0,
+                        "COBBLESTONE": 0,
+                        "BIRCH_LOG": 0,
+                        "ENDER_PEARL": 0,
+                        "BONE": 0
+                    }
+                },
+                "regions_model": {
+                    "region": "VILAREJO",
+                    "discovered_regions": {
+                        "GRANDE_MINA": false,
+                        "NINHO_DO_DRAGAO": false,
+                        "CEMITERIO": false,
+                        "ILHA_NATALINA": false,
+                        "MINA_DE_LAPIS": false,
+                        "MINA_DE_ESMERALDA": false,
+                        "FLORESTA_DE_TAIGA": false,
+                        "MINA_DE_OURO": false,
+                        "RANCHO": false,
+                        "FAZENDA": false,
+                        "MINA_DE_REDSTONE": false,
+                        "NETHER": false,
+                        "VILAREJO": false,
+                        "LABORATORIO": false,
+                        "NAVIO_PIRATA": false,
+                        "BANCO": false,
+                        "FLORESTA_DE_ACACIA": false,
+                        "FLORESTA_DE_CARVALHO": false,
+                        "CASA_DA_BRUXA": false,
+                        "FLORESTA_DE_CARVALHO_ESCURO": false,
+                        "COVIL_DAS_ARANHAS": false,
+                        "CAVERNA_MAGICA": false,
+                        "FLORESTA_DE_BETULA": false,
+                        "CASA_DE_LEILOES": false,
+                        "FERRARIA": false,
+                        "MINA_DE_OBSIDIANA": false,
+                        "FORTALEZA_DO_NETHER": false,
+                        "FLORESTA_DE_SELVA": false,
+                        "CANION": false,
+                        "MINA_DE_CARVAO": false,
+                        "MINA_DE_DIAMANTE": false,
+                        "O_FIM": false
+                    }
+                },
+                "objectives_model": {
+                    "objectives": []
+                },
+                "treasure_model": {
+                    "collected": 0,
+                    "treasures": []
+                }
+            },
+            "temporary_effects": [],
+            "temporary_stats": []
+        }
+    ]
+}
