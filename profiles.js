@@ -19,9 +19,11 @@ async function fetchPlayerProfile(username) {
     const API_KEY = "UNLIMITED_KEY";
     container.innerHTML = '<div class="loader">Consultando proxy local...</div>';
 
+    username.toLowerCase()
+    
     try {
         // Agora apontamos para o seu servidor Go
-        const response = await fetch(`https://skyblock-stats.onrender.com/profile?id=${username.toLowerCase()}&key=${API_KEY}`);
+        const response = await fetch(`https://skyblock-stats.onrender.com/profile?id=${username}&key=${API_KEY}`);
         
         if (!response.ok) throw new Error("Jogador não encontrado ou erro no proxy");
 
