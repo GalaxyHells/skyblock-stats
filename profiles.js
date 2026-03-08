@@ -1,8 +1,9 @@
-// Configurações
-const PROXY_URL = "https://skyblock-stats.onrender.com"; 
+const API_KEY = "UNLIMITED_KEY"; // Chave fornecida no seu exemplo
 const container = document.getElementById('profiles-container');
+const searchBtn = document.getElementById('search-btn');
+const searchInput = document.getElementById('player-search');
 
-// Dicionário de tradução para as Skills
+// Objeto para traduzir as chaves da API para nomes amigáveis
 const skillNames = {
     "FORAGING_SKILL": "Forrageamento",
     "COMBAT_SKILL": "Combate",
@@ -12,157 +13,218 @@ const skillNames = {
     "ENCHANTING_SKILL": "Encantamento"
 };
 
-// --- FUNÇÕES DE HISTÓRICO ---
-
-function saveToHistory(username) {
-    let history = JSON.parse(localStorage.getItem('searchHistory')) || [];
-    // Remove duplicatas e coloca o mais recente no topo
-    history = history.filter(name => name.toLowerCase() !== username.toLowerCase());
-    history.unshift(username);
-    // Mantém apenas os 5 últimos
-    if (history.length > 5) history.pop();
-    
-    localStorage.setItem('searchHistory', JSON.stringify(history));
-    renderHistory();
-}
-
-function renderHistory() {
-    const historyContainer = document.getElementById('recent-searches');
-    if (!historyContainer) return;
-
-    const history = JSON.parse(localStorage.getItem('searchHistory')) || [];
-    if (history.length === 0) {
-        historyContainer.innerHTML = '';
-        return;
-    }
-
-    historyContainer.innerHTML = `
-        <span style="color: #888; font-size: 0.8rem;">Recentes:</span>
-        <div class="history-list">
-            ${history.map(name => `
-                <button class="history-btn" onclick="fetchPlayerProfile('${name}')">${name}</button>
-            `).join('')}
-        </div>
-    `;
-}
-
-// --- BUSCA DE DADOS ---
+const maxSkillLevel = 25; // Definindo um nível máximo para as barras de progresso
 
 async function fetchPlayerProfile(username) {
-    if (!username || username.trim() === "") return;
-    
-    const cleanUsername = username.trim().toLowerCase();
-    container.innerHTML = '<div class="loader">Buscando informações no servidor...</div>';
+    const API_KEY = "UNLIMITED_KEY";
+    container.innerHTML = '<div class="loader">Consultando proxy local...</div>';
+
+    username = username.trim().toLowerCase()
 
     try {
-        // Chamada para o seu servidor Go (o proxy já cuida da API KEY internamente)
-        const response = await fetch(`${PROXY_URL}/profile?id=${cleanUsername}`);
+        // Agora apontamos para o seu servidor Go
+        const response = await fetch(`https://skyblock-stats.onrender.com/profile?id=${username}&key=${API_KEY}`);
+        //const response = await fetch(`http://127.0.0.1:8080/profile?id=${username}&key=${API_KEY}`);
         
-        if (!response.ok) throw new Error("Jogador não encontrado ou erro no servidor.");
+        if (!response.ok) throw new Error("Jogador não encontrado ou erro no proxy");
 
         const data = await response.json();
+        
+        // Seguindo a lógica do seu JSON:
         const activeIdx = data.activeProfile;
         const profile = data.profiles[activeIdx];
 
-        // Salva no histórico após o sucesso
-        saveToHistory(cleanUsername);
-        renderProfileCard(profile, cleanUsername);
-        
+        renderProfileCard(profile, username);
     } catch (error) {
-        container.innerHTML = `<div class="error">Erro: ${error.message}</div>`;
+        container.innerHTML = `<div class="error">${error.message}</div>`;
     }
 }
 
-// --- RENDERIZAÇÃO DO CARD ---
-
 function renderProfileCard(p, username) {
-    // 1. Uso de Optional Chaining (?.) e Nullish Coalescing (??) para evitar o erro de 'undefined'
-    const skills = p?.data_model?.skills_model?.level ?? {};
-    const colLvl = p?.data_model?.collections_model?.collection_level ?? {};
-    const colExp = p?.data_model?.collections_model?.collection_exp ?? {};
-    
-    // Se não houver purse (dinheiro), define como 0
-    const purseValue = p?.data_model?.stats_model?.purse ?? 0;
-    const purse = purseValue.toLocaleString('pt-BR');
+    // Extraindo dados do JSON
+    const purse = p.data_model.bank_model.purse.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }).replace('R$', '$');
+    const skills = p.data_model.skills_model.level;
+    const activePet = p.data_model.pet_model.active_pet;
 
-    // 2. Cálculo do Nível SkyBlock com segurança
-    const totalSkillLevels = Object.values(skills).reduce((a, b) => a + b, 0);
-    const totalColLevels = Object.values(colLvl).reduce((a, b) => a + b, 0);
-    
+    // Encontrando a maior skill para destaque
+    const topSkill = Object.entries(skills).reduce((a, b) => a[1] > b[1] ? a : b);
+
+    // Lógica das Coleções
+    const colLvl = p.data_model.collections_model.collection_level;
+    const colExp = p.data_model.collections_model.collection_exp;
+
+    // Filtra apenas as coleções maiores que nível 0
+    const activeCollections = Object.keys(colLvl).filter(key => colLvl[key] > 0);
+
+    // --- CÁLCULO DO NÍVEL SKYBLOCK ---
+    // 1. Soma todos os níveis de habilidades
+    const totalSkillLevels = Object.values(skills).reduce((acc, curr) => acc + curr, 0);
+
+    // 2. Soma todos os níveis de coleções
+    const totalColLevels = Object.values(colLvl).reduce((acc, curr) => acc + curr, 0);
+
+    // 3. Aplica a regra: cada nível = 10 XP
     const totalXP = (totalSkillLevels + totalColLevels) * 10;
-    const sbLevel = Math.floor(totalXP / 100);
-    const currentXP = totalXP % 100;
 
-    // Filtra apenas coleções que existem e são maiores que 0
-    const activeCols = Object.keys(colLvl).filter(key => colLvl[key] > 0);
+    // 4. Calcula o nível atual e o XP restante para o próximo nível
+    const skyblockLevel = Math.floor(totalXP / 100);
+    const currentLevelXP = totalXP % 100; 
+    // ---------------------------------
+
+    // Cria o HTML das coleções
+    const collectionsHTML = `
+        <div class="collections-section">
+            <h4>Coleções Desbloqueadas</h4>
+            <div class="collections-grid">
+                ${activeCollections.map(key => {
+                    const name = formatCollectionName(key);
+                    const lvl = colLvl[key];
+                    // Formata o número (ex: 56333277 vira 56.333.277)
+                    const exp = colExp[key].toLocaleString('pt-BR'); 
+                    
+                    return `
+                        <div class="collection-card">
+                            <div class="col-icon">${name.charAt(0)}</div>
+                            <div class="col-info">
+                                <h5>${name} <span class="col-lvl">${lvl}</span></h5>
+                                <span class="col-amount">${exp} coletados</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
 
     container.innerHTML = `
         <div class="profile-card-detail">
             <div class="card-header">
                 <div class="header-left">
-                    <img src="https://mc-heads.net/body/${username}/right" class="player-body">
+                    <img src="https://mc-heads.net/body/${username}/right" alt="${username}" class="player-body">
                     <div class="player-meta">
-                        <h2>${username} <span>(${p.profile_name || 'Perfil'})</span></h2>
+                        <h2>${username} <span>(${p.profile_name})</span></h2>
                         <p class="purse-text">💰 ${purse}</p>
-                        <p class="xp-text">Nível Vanilla: ${p.experience ?? 0}</p>
+                        <p class="xp-text">Nível de XP (Vanilla): ${p.experience}</p>
                     </div>
                 </div>
 
                 <div class="sb-level-box">
                     <div class="sb-level-title">Nível SkyBlock</div>
-                    <div class="sb-level-number">${sbLevel}</div>
+                    <div class="sb-level-number">${skyblockLevel}</div>
                     <div class="sb-level-bar-container">
-                        <div class="sb-level-bar-fill" style="width: ${currentXP}%"></div>
+                        <div class="sb-level-bar-fill" style="width: ${currentLevelXP}%"></div>
                     </div>
-                    <div class="sb-level-text">${currentXP} / 100 XP</div>
+                    <div class="sb-level-text">${currentLevelXP} / 100 XP</div>
                 </div>
             </div>
 
             <div class="stats-grid">
                 <div class="stat-item">
-                    <h4>Habilidades</h4>
-                    <div class="skills-list-mini">
-                        ${Object.entries(skills).length > 0 ? 
-                            Object.entries(skills).map(([name, lvl]) => `
-                                <div class="skill-mini">
-                                    <span>${skillNames[name] || name}</span>
-                                    <strong>${lvl}</strong>
-                                </div>
-                            `).join('') : '<p>Nenhuma skill evoluída</p>'
-                        }
-                    </div>
+                    <span class="label">Melhor Skill</span>
+                    <span class="value">${topSkill[0].replace('_SKILL', '')} ${topSkill[1]}</span>
                 </div>
-                
                 <div class="stat-item">
-                    <h4>Coleções</h4>
-                    <div class="skills-list-mini">
-                        ${activeCols.length > 0 ? 
-                            activeCols.slice(0, 6).map(key => `
-                                <div class="skill-mini">
-                                    <span>${key.replace(/_/g, ' ')}</span>
-                                    <strong>${colLvl[key]}</strong>
-                                </div>
-                            `).join('') : '<p>Nenhuma coleção</p>'
-                        }
-                    </div>
+                    <span class="label">Pet Ativo</span>
+                    <span class="value">${activePet ? activePet.petType : 'Nenhum'} (Lvl ${activePet ? activePet.level : 0})</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Região Atual</span>
+                    <span class="value">${p.data_model.regions_model.region}</span>
                 </div>
             </div>
+
+            <div class="skills-section">
+                <h4>Habilidades</h4>
+                <div class="skills-grid-inner">
+                    ${Object.entries(skills).map(([name, lvl]) => `
+                        <div class="skill-item-full">
+                            <div class="skill-label">
+                                <span>${skillNames[name] || name}</span>
+                                <span class="lvl">Nível ${lvl}</span>
+                            </div>
+                            <div class="bar-container">
+                                <div class="bar-fill" style="width: ${lvl * (100 / maxSkillLevel)}%"></div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            ${collectionsHTML}
         </div>
     `;
 }
 
-// --- INICIALIZAÇÃO ---
+searchBtn.addEventListener('click', () => fetchPlayerProfile(searchInput.value));
 
-document.addEventListener('DOMContentLoaded', () => {
-    renderHistory();
-    
-    const btn = document.getElementById('search-btn');
-    const input = document.getElementById('player-search');
-    
-    if (btn && input) {
-        btn.addEventListener('click', () => fetchPlayerProfile(input.value));
-        input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') fetchPlayerProfile(input.value);
-        });
-    }
+// Permitir busca ao apertar "Enter"
+searchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') fetchPlayerProfile(searchInput.value);
 });
+
+// Transforma "POTATO_ITEM" ou "EMERALD" em "Potato" e "Emerald"
+function formatCollectionName(name) {
+    return name.toLowerCase()
+               .replace(/_/g, ' ')
+               .replace(/\b\w/g, letra => letra.toUpperCase())
+               .replace(' Item', '') // Remove o sufixo "Item" de alguns itens
+               .replace(' Raw', ''); // Remove o sufixo "Raw"
+}
+
+// // 1. Função para salvar no histórico (sem duplicatas e limite de 5 nomes)
+// function saveToHistory(username) {
+//     let history = JSON.parse(localStorage.getItem('searchHistory')) || [];
+    
+//     // Remove o nome se já existir (para movê-lo para o topo)
+//     history = history.filter(name => name !== username);
+    
+//     // Adiciona no início da lista
+//     history.unshift(username);
+    
+//     // Mantém apenas os 5 últimos
+//     if (history.length > 5) history.pop();
+    
+//     localStorage.setItem('searchHistory', JSON.stringify(history));
+//     renderHistory();
+// }
+
+// // 2. Função para exibir os botões de histórico na tela
+// function renderHistory() {
+//     const historyContainer = document.getElementById('recent-searches'); // Você precisará deste ID no HTML
+//     const history = JSON.parse(localStorage.getItem('searchHistory')) || [];
+    
+//     if (history.length === 0) {
+//         historyContainer.innerHTML = '';
+//         return;
+//     }
+
+//     historyContainer.innerHTML = `
+//         <span style="color: #888; font-size: 0.8rem;">Recentes:</span>
+//         ${history.map(name => `
+//             <button class="history-btn" onclick="fetchPlayerProfile('${name}')">${name}</button>
+//         `).join('')}
+//     `;
+// }
+
+// // 3. Modifique sua função fetchPlayerProfile para chamar o saveToHistory no sucesso
+// async function fetchPlayerProfile(username) {
+//     const cleanUsername = username.trim().toLowerCase();
+//     if (!cleanUsername) return;
+
+//     // ... (seu código de fetch existente) ...
+
+//     try {
+//         const response = await fetch(`https://skyblock-stats.onrender.com/profile?id=${cleanUsername}`);
+//         // ...
+        
+//         // Se a busca deu certo, salvamos no histórico
+//         saveToHistory(cleanUsername);
+        
+//         renderProfileCard(profile, cleanUsername);
+//     } catch (error) {
+//         // ...
+//     }
+// }
+
+// // Chame a renderização inicial ao carregar a página
+// document.addEventListener('DOMContentLoaded', renderHistory);
