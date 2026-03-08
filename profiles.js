@@ -1,8 +1,8 @@
-// Configurações
+// Configurações Globais
 const PROXY_URL = "https://skyblock-stats.onrender.com"; 
 const container = document.getElementById('profiles-container');
 
-// Tradução das Skills
+// Dicionário de tradução para as Habilidades
 const skillNames = {
     "FORAGING_SKILL": "Forrageamento",
     "COMBAT_SKILL": "Combate",
@@ -14,6 +14,7 @@ const skillNames = {
 
 // --- FUNÇÕES DE UTILIDADE ---
 
+// Deixa os nomes das coleções bonitos (ex: POTATO_ITEM -> Potato)
 function formatCollectionName(name) {
     return name.toLowerCase()
                .replace(/_/g, ' ')
@@ -26,9 +27,14 @@ function formatCollectionName(name) {
 
 function saveToHistory(username) {
     let history = JSON.parse(localStorage.getItem('searchHistory')) || [];
-    history = history.filter(name => name !== username); // Remove duplicata
-    history.unshift(username); // Adiciona no topo
-    if (history.length > 5) history.pop(); // Limite de 5
+    
+    // Remove o nome se já existir para não duplicar e move para o topo
+    history = history.filter(name => name.toLowerCase() !== username.toLowerCase());
+    history.unshift(username);
+    
+    // Mantém apenas as 5 últimas buscas
+    if (history.length > 5) history.pop();
+    
     localStorage.setItem('searchHistory', JSON.stringify(history));
     renderHistory();
 }
@@ -38,6 +44,7 @@ function renderHistory() {
     if (!historyContainer) return;
 
     const history = JSON.parse(localStorage.getItem('searchHistory')) || [];
+    
     if (history.length === 0) {
         historyContainer.innerHTML = '';
         return;
@@ -45,64 +52,74 @@ function renderHistory() {
 
     historyContainer.innerHTML = `
         <span style="color: #888; font-size: 0.8rem;">Recentes:</span>
-        ${history.map(name => `
-            <button class="history-btn" onclick="fetchPlayerProfile('${name}')">${name}</button>
-        `).join('')}
+        <div class="history-list">
+            ${history.map(name => `
+                <button class="history-btn" onclick="fetchPlayerProfile('${name}')">${name}</button>
+            `).join('')}
+        </div>
     `;
 }
 
-// --- MOTOR DE BUSCA ---
+// --- BUSCA E RENDERIZAÇÃO ---
 
 async function fetchPlayerProfile(username) {
-    if (!username) return;
-    const cleanUsername = username.trim().toLowerCase();
+    if (!username || username.trim() === "") return;
     
-    container.innerHTML = '<div class="loader">Consultando proxy...</div>';
+    const cleanUsername = username.trim().toLowerCase();
+    container.innerHTML = '<div class="loader">Consultando SkyBlock API...</div>';
 
     try {
+        // Chamada para o seu proxy em Go no Render
         const response = await fetch(`${PROXY_URL}/profile?id=${cleanUsername}`);
-        if (!response.ok) throw new Error("Jogador não encontrado");
+        
+        if (!response.ok) {
+            throw new Error("Jogador não encontrado ou servidor offline.");
+        }
 
         const data = await response.json();
         const activeIdx = data.activeProfile;
         const profile = data.profiles[activeIdx];
 
-        // Se a busca deu certo, salva no histórico e renderiza
+        // Se a busca deu certo, salvamos no histórico e mostramos o card
         saveToHistory(cleanUsername);
         renderProfileCard(profile, cleanUsername);
         
     } catch (error) {
-        container.innerHTML = `<div class="error">Erro: ${error.message}</div>`;
+        container.innerHTML = `
+            <div class="error">
+                <p>⚠️ ${error.message}</p>
+                <small>Verifique se o nome está correto ou tente novamente em instantes.</small>
+            </div>`;
     }
 }
 
-// --- RENDERIZAÇÃO DO CARD ---
-
 function renderProfileCard(p, username) {
+    // Extraindo dados do JSON
     const skills = p.data_model.skills_model.level;
     const colLvl = p.data_model.collections_model.collection_level;
     const colExp = p.data_model.collections_model.collection_exp;
     const purse = p.data_model.stats_model.purse.toLocaleString('pt-BR');
 
-    // Cálculo do Nível SkyBlock (Sua regra: 10 XP por nível)
-    const totalLevels = Object.values(skills).reduce((a, b) => a + b, 0) + 
-                        Object.values(colLvl).reduce((a, b) => a + b, 0);
-    const totalXP = totalLevels * 10;
+    // CÁLCULO NÍVEL SKYBLOCK (10 XP por nível de Skill/Coleção)
+    const totalSkillLevels = Object.values(skills).reduce((a, b) => a + b, 0);
+    const totalColLevels = Object.values(colLvl).reduce((a, b) => a + b, 0);
+    const totalXP = (totalSkillLevels + totalColLevels) * 10;
+    
     const sbLevel = Math.floor(totalXP / 100);
     const progressXP = totalXP % 100;
 
-    // Filtro de Coleções Ativas
-    const activeCols = Object.keys(colLvl).filter(key => colLvl[key] > 0);
+    // Filtra apenas coleções que o jogador já começou
+    const activeCollections = Object.keys(colLvl).filter(key => colLvl[key] > 0);
 
     container.innerHTML = `
         <div class="profile-card-detail">
             <div class="card-header">
                 <div class="header-left">
-                    <img src="https://mc-heads.net/body/${username}/right" class="player-body">
+                    <img src="https://mc-heads.net/body/${username}/right" alt="${username}" class="player-body">
                     <div class="player-meta">
                         <h2>${username} <span>(${p.profile_name})</span></h2>
                         <p class="purse-text">💰 ${purse}</p>
-                        <p class="xp-text">Nível XP Vanilla: ${p.experience}</p>
+                        <p class="xp-text">XP Vanilla: ${p.experience}</p>
                     </div>
                 </div>
 
@@ -123,10 +140,10 @@ function renderProfileCard(p, username) {
                         <div class="skill-item-full">
                             <div class="skill-label">
                                 <span>${skillNames[name] || name}</span>
-                                <span class="lvl">Nível ${lvl}</span>
+                                <span class="lvl">Lvl ${lvl}</span>
                             </div>
                             <div class="bar-container">
-                                <div class="bar-fill" style="width: ${(lvl/25)*100}%"></div>
+                                <div class="bar-fill" style="width: ${(lvl / 25) * 100}%"></div>
                             </div>
                         </div>
                     `).join('')}
@@ -134,9 +151,9 @@ function renderProfileCard(p, username) {
             </div>
 
             <div class="collections-section">
-                <h4>Coleções</h4>
+                <h4>Coleções Desbloqueadas</h4>
                 <div class="collections-grid">
-                    ${activeCols.map(key => `
+                    ${activeCollections.map(key => `
                         <div class="collection-card">
                             <div class="col-icon">${key.charAt(0)}</div>
                             <div class="col-info">
