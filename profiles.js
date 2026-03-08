@@ -15,25 +15,22 @@ const skillNames = {
 
 const maxSkillLevel = 25; // Definindo um nível máximo para as barras de progresso
 
-async function fetchPlayerProfile(username) {
-    const API_KEY = "UNLIMITED_KEY";
-    container.innerHTML = '<div class="loader">Consultando proxy local...</div>';
+// Detecta se estás a testar localmente ou no Render
+const PROXY_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:8080"
+    : "https://skyblock-stats.onrender.com";
 
-    username = username.trim().toLowerCase()
+async function fetchPlayerProfile(username) {
+    if (!username) return;
+    container.innerHTML = '<div class="loader">Buscando...</div>';
 
     try {
-        // Agora apontamos para o seu servidor Go
-        const response = await fetch(`https://skyblock-stats.onrender.com/profile?id=${username}&key=${API_KEY}`);
-        //const response = await fetch(`http://127.0.0.1:8080/profile?id=${username}&key=${API_KEY}`);
-        
-        if (!response.ok) throw new Error("Jogador não encontrado ou erro no proxy");
+        const response = await fetch(`${PROXY_URL}/profile?id=${username.toLowerCase()}`);
+        if (!response.ok) throw new Error("Não encontrado");
 
         const data = await response.json();
+        const profile = data.profiles[data.activeProfile];
         
-        // Seguindo a lógica do seu JSON:
-        const activeIdx = data.activeProfile;
-        const profile = data.profiles[activeIdx];
-
         renderProfileCard(profile, username);
     } catch (error) {
         container.innerHTML = `<div class="error">${error.message}</div>`;
@@ -41,116 +38,23 @@ async function fetchPlayerProfile(username) {
 }
 
 function renderProfileCard(p, username) {
-    // Extraindo dados do JSON
-    const purse = p.data_model.bank_model.purse.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }).replace('R$', '$');
-    const skills = p.data_model.skills_model.level;
-    const activePet = p.data_model.pet_model.active_pet;
+    // Cálculo simples de nível (Skills + Coleções)
+    const skills = p.data_model?.skills_model?.level ?? {};
+    const cols = p.data_model?.collections_model?.collection_level ?? {};
+    
+    const totalLevel = Object.values(skills).reduce((a, b) => a + b, 0) + 
+                       Object.values(cols).reduce((a, b) => a + b, 0);
+    
+    const sbLevel = Math.floor(totalLevel / 10);
 
-    // Encontrando a maior skill para destaque
-    const topSkill = Object.entries(skills).reduce((a, b) => a[1] > b[1] ? a : b);
-
-    // Lógica das Coleções
-    const colLvl = p.data_model.collections_model.collection_level;
-    const colExp = p.data_model.collections_model.collection_exp;
-
-    // Filtra apenas as coleções maiores que nível 0
-    const activeCollections = Object.keys(colLvl).filter(key => colLvl[key] > 0);
-
-    // --- CÁLCULO DO NÍVEL SKYBLOCK ---
-    // 1. Soma todos os níveis de habilidades
-    const totalSkillLevels = Object.values(skills).reduce((acc, curr) => acc + curr, 0);
-
-    // 2. Soma todos os níveis de coleções
-    const totalColLevels = Object.values(colLvl).reduce((acc, curr) => acc + curr, 0);
-
-    // 3. Aplica a regra: cada nível = 10 XP
-    const totalXP = (totalSkillLevels + totalColLevels) * 10;
-
-    // 4. Calcula o nível atual e o XP restante para o próximo nível
-    const skyblockLevel = Math.floor(totalXP / 100);
-    const currentLevelXP = totalXP % 100; 
-    // ---------------------------------
-
-    // Cria o HTML das coleções
-    const collectionsHTML = `
-        <div class="collections-section">
-            <h4>Coleções Desbloqueadas</h4>
-            <div class="collections-grid">
-                ${activeCollections.map(key => {
-                    const name = formatCollectionName(key);
-                    const lvl = colLvl[key];
-                    // Formata o número (ex: 56333277 vira 56.333.277)
-                    const exp = colExp[key].toLocaleString('pt-BR'); 
-                    
-                    return `
-                        <div class="collection-card">
-                            <div class="col-icon">${name.charAt(0)}</div>
-                            <div class="col-info">
-                                <h5>${name} <span class="col-lvl">${lvl}</span></h5>
-                                <span class="col-amount">${exp} coletados</span>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        </div>
-    `;
+    // Atualiza o Rank no servidor
+    updateLeaderboardInGo(username, sbLevel);
 
     container.innerHTML = `
         <div class="profile-card-detail">
-            <div class="card-header">
-                <div class="header-left">
-                    <img src="https://mc-heads.net/body/${username}/right" alt="${username}" class="player-body">
-                    <div class="player-meta">
-                        <h2>${username} <span>(${p.profile_name})</span></h2>
-                        <p class="purse-text">💰 ${purse}</p>
-                        <p class="xp-text">Nível de XP (Vanilla): ${p.experience}</p>
-                    </div>
-                </div>
-
-                <div class="sb-level-box">
-                    <div class="sb-level-title">Nível SkyBlock</div>
-                    <div class="sb-level-number">${skyblockLevel}</div>
-                    <div class="sb-level-bar-container">
-                        <div class="sb-level-bar-fill" style="width: ${currentLevelXP}%"></div>
-                    </div>
-                    <div class="sb-level-text">${currentLevelXP} / 100 XP</div>
-                </div>
-            </div>
-
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <span class="label">Melhor Skill</span>
-                    <span class="value">${topSkill[0].replace('_SKILL', '')} ${topSkill[1]}</span>
-                </div>
-                <div class="stat-item">
-                    <span class="label">Pet Ativo</span>
-                    <span class="value">${activePet ? activePet.petType : 'Nenhum'} (Lvl ${activePet ? activePet.level : 0})</span>
-                </div>
-                <div class="stat-item">
-                    <span class="label">Região Atual</span>
-                    <span class="value">${p.data_model.regions_model.region}</span>
-                </div>
-            </div>
-
-            <div class="skills-section">
-                <h4>Habilidades</h4>
-                <div class="skills-grid-inner">
-                    ${Object.entries(skills).map(([name, lvl]) => `
-                        <div class="skill-item-full">
-                            <div class="skill-label">
-                                <span>${skillNames[name] || name}</span>
-                                <span class="lvl">Nível ${lvl}</span>
-                            </div>
-                            <div class="bar-container">
-                                <div class="bar-fill" style="width: ${lvl * (100 / maxSkillLevel)}%"></div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-
-            ${collectionsHTML}
+            <h2>${username}</h2>
+            <p class="sb-level-number">Nível SB: ${sbLevel}</p>
+            <p>Dinheiro: ${p.data_model?.stats_model?.purse?.toLocaleString() ?? 0}</p>
         </div>
     `;
 }
@@ -230,25 +134,32 @@ function formatCollectionName(name) {
 // document.addEventListener('DOMContentLoaded', renderHistory);
 
 // 1. Busca e desenha o Leaderboard na tela
+// --- LEADERBOARD ---
+
 async function fetchLeaderboard() {
     const list = document.getElementById('leaderboard-list');
+    if (!list) return;
+
     try {
         const res = await fetch(`${PROXY_URL}/top`);
         const topPlayers = await res.json();
         
         if (!topPlayers || topPlayers.length === 0) {
-            list.innerHTML = '<li>Nenhum jogador registrado ainda.</li>';
+            list.innerHTML = '<li class="lb-item">Nenhum jogador no Rank.</li>';
             return;
         }
 
-        list.innerHTML = topPlayers.map((p, index) => `
-            <li class="lb-item">
-                <span>#${index + 1} <b>${p.username}</b></span>
-                <strong>Lvl ${p.level}</strong>
-            </li>
-        `).join('');
+        list.innerHTML = topPlayers.map((p, index) => {
+            const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
+            return `
+                <li class="lb-item">
+                    <span>${medal} <b>${p.username}</b></span>
+                    <strong>Lvl ${p.level}</strong>
+                </li>
+            `;
+        }).join('');
     } catch (e) {
-        list.innerHTML = '<li>Erro ao carregar o rank.</li>';
+        list.innerHTML = '<li style="color:red">Erro ao carregar Rank</li>';
     }
 }
 
@@ -258,18 +169,23 @@ async function updateLeaderboardInGo(username, level) {
         await fetch(`${PROXY_URL}/update-top`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: username, level: level })
+            body: JSON.stringify({ username, level })
         });
-        // Após atualizar no servidor, recarrega a lista visualmente
-        fetchLeaderboard();
-    } catch (e) {
-        console.error("Erro ao atualizar o rank:", e);
-    }
+        fetchLeaderboard(); // Recarrega a lista após atualizar
+    } catch (e) { console.error("Erro ao atualizar rank:", e); }
 }
-
 // 3. Atualize a inicialização para carregar o rank quando a página abrir
 document.addEventListener('DOMContentLoaded', () => {
     renderHistory();
     fetchLeaderboard(); // <-- CHAMA O RANKING AQUI
     // ... resto dos seus botões ...
+});
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', () => {
+    fetchLeaderboard();
+    
+    document.getElementById('search-btn').addEventListener('click', () => {
+        fetchPlayerProfile(document.getElementById('player-search').value);
+    });
 });
