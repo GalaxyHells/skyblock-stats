@@ -71,6 +71,8 @@ function renderProfileCard(p, username) {
     const currentLevelXP = totalXP % 100; 
     // ---------------------------------
 
+    reportLevelToServer(username, skyblockLevel);
+
     // Cria o HTML das coleções
     const collectionsHTML = `
         <div class="collections-section">
@@ -170,3 +172,17 @@ function formatCollectionName(name) {
                .replace(' Item', '') // Remove o sufixo "Item" de alguns itens
                .replace(' Raw', ''); // Remove o sufixo "Raw"
 }
+
+// Adicione esta função ao final do profiles.js
+async function reportLevelToServer(username, level) {
+    const API_BASE = window.location.hostname === "localhost" ? "http://localhost:8080" : "https://skyblock-stats.onrender.com";
+    try {
+        await fetch(`${API_BASE}/update-top`, {
+            method: 'POST',
+            body: JSON.stringify({ username, level }),
+            headers: { 'Content-Type': 'application/json' }
+        });
+    } catch (e) { console.error("Erro ao reportar nível"); }
+}
+
+// DENTRO da sua função renderProfileCard, após calcular o nível:

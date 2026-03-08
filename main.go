@@ -74,70 +74,59 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(apiData)
 }
 
-// --- SISTEMA DE LEADERBOARD ---
+// No seu main.go, adicione estas estruturas e handlers
 var (
-	leaderboard = make(map[string]int) // Guarda "username" -> "nivel"
-	lbMutex     sync.RWMutex           // Protege contra leitura/escrita simultânea
+	leaderboard = make(map[string]int) // Guarda Nome -> Nível
+	lbMutex     sync.RWMutex
 )
 
-// Rota para o Frontend avisar o nível do jogador pesquisado
+type ScoreRequest struct {
+	Username string `json:"username"`
+	Level    int    `json:"level"`
+}
+
 func updateTopHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
+	if r.Method != http.MethodPost {
 		return
 	}
 
-	var data struct {
-		Username string `json:"username"`
-		Level    int    `json:"level"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&data); err == nil && data.Username != "" {
+	var req ScoreRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err == nil && req.Username != "" {
 		lbMutex.Lock()
-		// Só atualiza se o nível novo for maior que o antigo (ou se for novo)
-		if currentLevel, exists := leaderboard[data.Username]; !exists || data.Level > currentLevel {
-			leaderboard[data.Username] = data.Level
+		// Só atualiza se o nível novo for maior
+		if current, exists := leaderboard[req.Username]; !exists || req.Level > current {
+			leaderboard[req.Username] = req.Level
 		}
 		lbMutex.Unlock()
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
-// Rota para entregar o Top 10 para quem acessar o site
 func getTopHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
 
-	// Estrutura temporária para ordenar
-	type PlayerScore struct {
-		Username string `json:"username"`
-		Level    int    `json:"level"`
-	}
-
 	lbMutex.RLock()
-	var scores []PlayerScore
+	var scores []ScoreRequest
 	for k, v := range leaderboard {
-		scores = append(scores, PlayerScore{Username: k, Level: v})
+		scores = append(scores, ScoreRequest{Username: k, Level: v})
 	}
 	lbMutex.RUnlock()
 
-	// Ordena do maior nível para o menor
-	sort.Slice(scores, func(i, j int) bool {
-		return scores[i].Level > scores[j].Level
-	})
+	// Ordenar do maior para o menor
+	sort.Slice(scores, func(i, j int) bool { return scores[i].Level > scores[j].Level })
 
-	// Pega no máximo os Top 10
+	// Retorna top 10
 	limit := 10
 	if len(scores) < 10 {
 		limit = len(scores)
 	}
-
 	json.NewEncoder(w).Encode(scores[:limit])
 }
+
+// No func main(), registre as rotas:
+// http.HandleFunc("/update-top", updateTopHandler)
+// http.HandleFunc("/top", getTopHandler)
 
 func main() {
 	port := os.Getenv("PORT")
@@ -149,6 +138,4 @@ func main() {
 	fmt.Printf("🚀 Proxy com Cache (15min) na porta %s\n", port)
 	http.ListenAndServe(":"+port, nil)
 	http.HandleFunc("/profile", proxyHandler)
-	http.HandleFunc("/update-top", updateTopHandler) // Rota nova
-	http.HandleFunc("/top", getTopHandler)           // Rota nova
 }
