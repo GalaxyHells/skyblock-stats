@@ -95,7 +95,7 @@
 
                 list.innerHTML = data.map((p, i) => `
                     <li class="rank-item">
-                        <span>#${i+1} <b>${p.username}</b></span>
+                        <span>#${i+1} <b><a href="profiles.html?user=${encodeURIComponent(p.username)}" class="top-username-link">${p.username}</a></b></span>
                         <span style="color: var(--gold)">Lvl ${p.level}</span>
                     </li>
                 `).join('');

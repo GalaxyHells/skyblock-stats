@@ -164,6 +164,16 @@ searchInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') fetchPlayerProfile(searchInput.value);
 });
 
+// Carrega perfil automaticamente se vier ?user=nickname na URL
+(function autoLoadFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    const userFromQuery = params.get('user');
+    if (userFromQuery) {
+        searchInput.value = userFromQuery;
+        fetchPlayerProfile(userFromQuery);
+    }
+})();
+
 // Transforma "POTATO_ITEM" ou "EMERALD" em "Potato" e "Emerald"
 function formatCollectionName(name) {
     return name.toLowerCase()
