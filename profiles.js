@@ -76,18 +76,25 @@ async function fetchPlayerProfile(username) {
 // --- RENDERIZAÇÃO DO CARD ---
 
 function renderProfileCard(p, username) {
-    const skills = p.data_model.skills_model.level;
-    const colLvl = p.data_model.collections_model.collection_level;
-    const purse = p.data_model.stats_model.purse.toLocaleString('pt-BR');
+    // 1. Uso de Optional Chaining (?.) e Nullish Coalescing (??) para evitar o erro de 'undefined'
+    const skills = p?.data_model?.skills_model?.level ?? {};
+    const colLvl = p?.data_model?.collections_model?.collection_level ?? {};
+    const colExp = p?.data_model?.collections_model?.collection_exp ?? {};
+    
+    // Se não houver purse (dinheiro), define como 0
+    const purseValue = p?.data_model?.stats_model?.purse ?? 0;
+    const purse = purseValue.toLocaleString('pt-BR');
 
-    // CÁLCULO DO NÍVEL SKYBLOCK PERSONALIZADO
-    // 1 nível (skill ou coleção) = 10 XP. 100 XP = 1 Nível SB.
+    // 2. Cálculo do Nível SkyBlock com segurança
     const totalSkillLevels = Object.values(skills).reduce((a, b) => a + b, 0);
     const totalColLevels = Object.values(colLvl).reduce((a, b) => a + b, 0);
     
     const totalXP = (totalSkillLevels + totalColLevels) * 10;
     const sbLevel = Math.floor(totalXP / 100);
-    const currentXP = totalXP % 100; // O que sobra para a barra
+    const currentXP = totalXP % 100;
+
+    // Filtra apenas coleções que existem e são maiores que 0
+    const activeCols = Object.keys(colLvl).filter(key => colLvl[key] > 0);
 
     container.innerHTML = `
         <div class="profile-card-detail">
@@ -95,9 +102,9 @@ function renderProfileCard(p, username) {
                 <div class="header-left">
                     <img src="https://mc-heads.net/body/${username}/right" class="player-body">
                     <div class="player-meta">
-                        <h2>${username} <span>(${p.profile_name})</span></h2>
+                        <h2>${username} <span>(${p.profile_name || 'Perfil'})</span></h2>
                         <p class="purse-text">💰 ${purse}</p>
-                        <p class="xp-text">Nível Vanilla: ${p.experience}</p>
+                        <p class="xp-text">Nível Vanilla: ${p.experience ?? 0}</p>
                     </div>
                 </div>
 
@@ -115,24 +122,28 @@ function renderProfileCard(p, username) {
                 <div class="stat-item">
                     <h4>Habilidades</h4>
                     <div class="skills-list-mini">
-                        ${Object.entries(skills).map(([name, lvl]) => `
-                            <div class="skill-mini">
-                                <span>${skillNames[name] || name}</span>
-                                <strong>${lvl}</strong>
-                            </div>
-                        `).join('')}
+                        ${Object.entries(skills).length > 0 ? 
+                            Object.entries(skills).map(([name, lvl]) => `
+                                <div class="skill-mini">
+                                    <span>${skillNames[name] || name}</span>
+                                    <strong>${lvl}</strong>
+                                </div>
+                            `).join('') : '<p>Nenhuma skill evoluída</p>'
+                        }
                     </div>
                 </div>
                 
                 <div class="stat-item">
-                    <h4>Coleções (Top)</h4>
+                    <h4>Coleções</h4>
                     <div class="skills-list-mini">
-                        ${Object.entries(colLvl).slice(0, 6).map(([name, lvl]) => `
-                            <div class="skill-mini">
-                                <span>${name.replace('_', ' ')}</span>
-                                <strong>${lvl}</strong>
-                            </div>
-                        `).join('')}
+                        ${activeCols.length > 0 ? 
+                            activeCols.slice(0, 6).map(key => `
+                                <div class="skill-mini">
+                                    <span>${key.replace(/_/g, ' ')}</span>
+                                    <strong>${colLvl[key]}</strong>
+                                </div>
+                            `).join('') : '<p>Nenhuma coleção</p>'
+                        }
                     </div>
                 </div>
             </div>
