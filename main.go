@@ -10,49 +10,78 @@ import (
 	"time"
 )
 
-// Estrutura para guardar o perfil e quando ele expira
+// --- ESTRUTURAS ---
+
 type CachedProfile struct {
 	Data       interface{}
 	Expiration time.Time
 }
 
+type ScoreRequest struct {
+	Username string `json:"username"`
+	Level    int    `json:"level"`
+}
+
 var (
-	// Nosso "banco de dados" temporário
+	// Cache de Perfis
 	cache = make(map[string]CachedProfile)
-	// Mutex para evitar que duas requisições tentem escrever no mapa ao mesmo tempo
 	mutex sync.RWMutex
+
+	// Ranking (Leaderboard)
+	leaderboard = make(map[string]int)
+	lbMutex     sync.RWMutex
 )
 
+// --- HELPERS ---
+
+// Função para aplicar os headers de CORS em todas as respostas
+func setupCORS(w *http.ResponseWriter, r *http.Request) bool {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	// Se for uma requisição de "preflight" (OPTIONS), paramos por aqui
+	if r.Method == "OPTIONS" {
+		(*w).WriteHeader(http.StatusOK)
+		return true
+	}
+	return false
+}
+
+// --- HANDLERS ---
+
 func proxyHandler(w http.ResponseWriter, r *http.Request) {
+	if setupCORS(&w, r) {
+		return
+	}
+
 	apiKey := os.Getenv("SKYBLOCK_API_KEY")
 	playerID := r.URL.Query().Get("id")
-
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Content-Type", "application/json")
 
 	if playerID == "" {
 		http.Error(w, "ID do jogador é obrigatório", http.StatusBadRequest)
 		return
 	}
 
-	// 1. Verificar se temos o perfil no cache e se ainda é válido (15 min)
+	// 1. Verificar Cache
 	mutex.RLock()
 	cached, found := cache[playerID]
 	mutex.RUnlock()
 
 	if found && time.Now().Before(cached.Expiration) {
 		fmt.Printf("📦 Servindo %s via Cache\n", playerID)
+		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(cached.Data)
 		return
 	}
 
-	// 2. Se não estiver no cache ou expirou, buscar na API
-	fmt.Printf("🌐 Buscando %s na API (Cache Expirado/Inexistente)\n", playerID)
+	// 2. Buscar na API Externa
+	fmt.Printf("🌐 Buscando %s na API\n", playerID)
 	targetURL := fmt.Sprintf("https://skyapi.onrender.com/skyblock/player/profile?id=%s&key=%s", playerID, apiKey)
 
 	resp, err := http.Get(targetURL)
 	if err != nil || resp.StatusCode != 200 {
-		http.Error(w, "Erro ao buscar dados", http.StatusBadGateway)
+		http.Error(w, "Erro ao buscar dados na API externa", http.StatusBadGateway)
 		return
 	}
 	defer resp.Body.Close()
@@ -63,7 +92,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 3. Salvar no Cache com validade de 15 minutos
+	// 3. Salvar no Cache
 	mutex.Lock()
 	cache[playerID] = CachedProfile{
 		Data:       apiData,
@@ -71,40 +100,38 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	mutex.Unlock()
 
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(apiData)
 }
 
-// --- TOPS ---
-var (
-	leaderboard = make(map[string]int) // Guarda Nome -> Nível
-	lbMutex     sync.RWMutex
-)
-
-type ScoreRequest struct {
-	Username string `json:"username"`
-	Level    int    `json:"level"`
-}
-
 func updateTopHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if setupCORS(&w, r) {
+		return
+	}
+
 	if r.Method != http.MethodPost {
+		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
 		return
 	}
 
 	var req ScoreRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err == nil && req.Username != "" {
 		lbMutex.Lock()
-		// Só atualiza se o nível novo for maior
 		if current, exists := leaderboard[req.Username]; !exists || req.Level > current {
 			leaderboard[req.Username] = req.Level
+			fmt.Printf("🏆 Ranking atualizado: %s agora é nível %d\n", req.Username, req.Level)
 		}
 		lbMutex.Unlock()
+		w.WriteHeader(http.StatusOK)
+	} else {
+		http.Error(w, "Dados inválidos", http.StatusBadRequest)
 	}
 }
 
 func getTopHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Content-Type", "application/json")
+	if setupCORS(&w, r) {
+		return
+	}
 
 	lbMutex.RLock()
 	var scores []ScoreRequest
@@ -116,13 +143,17 @@ func getTopHandler(w http.ResponseWriter, r *http.Request) {
 	// Ordenar do maior para o menor
 	sort.Slice(scores, func(i, j int) bool { return scores[i].Level > scores[j].Level })
 
-	// Retorna top 10
+	// Limitar ao Top 10
 	limit := 10
 	if len(scores) < 10 {
 		limit = len(scores)
 	}
+
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(scores[:limit])
 }
+
+// --- MAIN ---
 
 func main() {
 	port := os.Getenv("PORT")
@@ -130,10 +161,17 @@ func main() {
 		port = "8080"
 	}
 
-	http.HandleFunc("/profile", proxyHandler)
-	fmt.Printf("🚀 Proxy com Cache (15min) na porta %s\n", port)
-	http.ListenAndServe(":"+port, nil)
+	// REGISTRO DAS ROTAS (Deve vir ANTES do ListenAndServe)
 	http.HandleFunc("/profile", proxyHandler)
 	http.HandleFunc("/update-top", updateTopHandler)
 	http.HandleFunc("/top", getTopHandler)
+
+	fmt.Printf("🚀 Servidor iniciado na porta %s\n", port)
+	fmt.Printf("📌 Rotas: /profile, /top, /update-top\n")
+
+	// Inicia o servidor (esta função bloqueia a execução)
+	err := http.ListenAndServe(":"+port, nil)
+	if err != nil {
+		fmt.Printf("❌ Erro ao iniciar servidor: %v\n", err)
+	}
 }
