@@ -228,3 +228,48 @@ function formatCollectionName(name) {
 
 // // Chame a renderização inicial ao carregar a página
 // document.addEventListener('DOMContentLoaded', renderHistory);
+
+// 1. Busca e desenha o Leaderboard na tela
+async function fetchLeaderboard() {
+    const list = document.getElementById('leaderboard-list');
+    try {
+        const res = await fetch(`${PROXY_URL}/top`);
+        const topPlayers = await res.json();
+        
+        if (!topPlayers || topPlayers.length === 0) {
+            list.innerHTML = '<li>Nenhum jogador registrado ainda.</li>';
+            return;
+        }
+
+        list.innerHTML = topPlayers.map((p, index) => `
+            <li class="lb-item">
+                <span>#${index + 1} <b>${p.username}</b></span>
+                <strong>Lvl ${p.level}</strong>
+            </li>
+        `).join('');
+    } catch (e) {
+        list.innerHTML = '<li>Erro ao carregar o rank.</li>';
+    }
+}
+
+// 2. Envia o nível calculado para o servidor Go
+async function updateLeaderboardInGo(username, level) {
+    try {
+        await fetch(`${PROXY_URL}/update-top`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: username, level: level })
+        });
+        // Após atualizar no servidor, recarrega a lista visualmente
+        fetchLeaderboard();
+    } catch (e) {
+        console.error("Erro ao atualizar o rank:", e);
+    }
+}
+
+// 3. Atualize a inicialização para carregar o rank quando a página abrir
+document.addEventListener('DOMContentLoaded', () => {
+    renderHistory();
+    fetchLeaderboard(); // <-- CHAMA O RANKING AQUI
+    // ... resto dos seus botões ...
+});
