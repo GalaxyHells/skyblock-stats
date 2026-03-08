@@ -19,7 +19,7 @@ async function fetchPlayerProfile(username) {
     const API_KEY = "UNLIMITED_KEY";
     container.innerHTML = '<div class="loader">Consultando proxy local...</div>';
 
-    username = username.toLowerCase()
+    username = username.trim().toLowerCase()
 
     try {
         // Agora apontamos para o seu servidor Go
@@ -169,3 +169,61 @@ function formatCollectionName(name) {
                .replace(' Item', '') // Remove o sufixo "Item" de alguns itens
                .replace(' Raw', ''); // Remove o sufixo "Raw"
 }
+
+// 1. Função para salvar no histórico (sem duplicatas e limite de 5 nomes)
+function saveToHistory(username) {
+    let history = JSON.parse(localStorage.getItem('searchHistory')) || [];
+    
+    // Remove o nome se já existir (para movê-lo para o topo)
+    history = history.filter(name => name !== username);
+    
+    // Adiciona no início da lista
+    history.unshift(username);
+    
+    // Mantém apenas os 5 últimos
+    if (history.length > 5) history.pop();
+    
+    localStorage.setItem('searchHistory', JSON.stringify(history));
+    renderHistory();
+}
+
+// 2. Função para exibir os botões de histórico na tela
+function renderHistory() {
+    const historyContainer = document.getElementById('recent-searches'); // Você precisará deste ID no HTML
+    const history = JSON.parse(localStorage.getItem('searchHistory')) || [];
+    
+    if (history.length === 0) {
+        historyContainer.innerHTML = '';
+        return;
+    }
+
+    historyContainer.innerHTML = `
+        <span style="color: #888; font-size: 0.8rem;">Recentes:</span>
+        ${history.map(name => `
+            <button class="history-btn" onclick="fetchPlayerProfile('${name}')">${name}</button>
+        `).join('')}
+    `;
+}
+
+// 3. Modifique sua função fetchPlayerProfile para chamar o saveToHistory no sucesso
+async function fetchPlayerProfile(username) {
+    const cleanUsername = username.trim().toLowerCase();
+    if (!cleanUsername) return;
+
+    // ... (seu código de fetch existente) ...
+
+    try {
+        const response = await fetch(`https://skyblock-stats.onrender.com/profile?id=${cleanUsername}`);
+        // ...
+        
+        // Se a busca deu certo, salvamos no histórico
+        saveToHistory(cleanUsername);
+        
+        renderProfileCard(profile, cleanUsername);
+    } catch (error) {
+        // ...
+    }
+}
+
+// Chame a renderização inicial ao carregar a página
+document.addEventListener('DOMContentLoaded', renderHistory);

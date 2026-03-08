@@ -41,6 +41,13 @@
 
         <div class="profiles-grid" id="profiles-container">
             </div>
+            
+        <div class="search-container">
+            <input type="text" id="usernameInput" placeholder="neomin">
+            <button onclick="fetchPlayerProfile(document.getElementById('usernameInput').value)">BUSCAR</button>
+        </div>
+
+        <div id="recent-searches" class="recent-container"></div>
     </main>
 
     <script src="profiles.js"></script>
