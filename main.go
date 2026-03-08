@@ -74,7 +74,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(apiData)
 }
 
-// No seu main.go, adicione estas estruturas e handlers
+// --- TOPS ---
 var (
 	leaderboard = make(map[string]int) // Guarda Nome -> Nível
 	lbMutex     sync.RWMutex
@@ -124,10 +124,6 @@ func getTopHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(scores[:limit])
 }
 
-// No func main(), registre as rotas:
-// http.HandleFunc("/update-top", updateTopHandler)
-// http.HandleFunc("/top", getTopHandler)
-
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -138,4 +134,6 @@ func main() {
 	fmt.Printf("🚀 Proxy com Cache (15min) na porta %s\n", port)
 	http.ListenAndServe(":"+port, nil)
 	http.HandleFunc("/profile", proxyHandler)
+	http.HandleFunc("/update-top", updateTopHandler)
+	http.HandleFunc("/top", getTopHandler)
 }
