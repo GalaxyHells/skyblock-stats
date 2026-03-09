@@ -2,7 +2,6 @@ const API_KEY = "UNLIMITED_KEY"; // Chave fornecida no seu exemplo
 const container = document.getElementById('profiles-container');
 const searchBtn = document.getElementById('search-btn');
 const searchInput = document.getElementById('player-search');
-const inventoryGrid = document.getElementById('player-inventory');
 
 // Objeto para traduzir as chaves da API para nomes amigáveis
 const skillNames = {
@@ -175,6 +174,8 @@ searchInput.addEventListener('keypress', (e) => {
 
 // ---------------- INVENTÁRIO (36 slots) ----------------
 async function fetchPlayerInventory(username) {
+    // Obtém o grid do inventário após o card ser renderizado
+    const inventoryGrid = document.getElementById('player-inventory');
     if (!inventoryGrid) return;
 
     // Limpa e mostra estado de carregamento
@@ -191,8 +192,6 @@ async function fetchPlayerInventory(username) {
 
         const data = await response.json();
 
-        // A API do Go apenas repassa o JSON original do skyapi
-        // PLAYER_INVENTORY é uma STRING contendo JSON
         const playerInvRaw = data.PLAYER_INVENTORY;
         if (!playerInvRaw) {
             renderEmptyInventory();
@@ -201,7 +200,7 @@ async function fetchPlayerInventory(username) {
 
         let parsed;
         try {
-            parsed = JSON.parse(playerInvRaw); // <- IMPORTANTÍSSIMO
+            parsed = JSON.parse(playerInvRaw);
         } catch (e) {
             console.error("Erro ao parsear PLAYER_INVENTORY:", e);
             renderEmptyInventory();
@@ -217,6 +216,7 @@ async function fetchPlayerInventory(username) {
 }
 
 function renderInventoryGrid(size) {
+    const inventoryGrid = document.getElementById('player-inventory');
     if (!inventoryGrid) return;
     const slots = size || 36;
     inventoryGrid.innerHTML = '';
@@ -225,6 +225,10 @@ function renderInventoryGrid(size) {
         const slot = document.createElement('div');
         slot.className = 'inv-slot';
         slot.dataset.slot = i;
+
+        // opcional, para ter certeza visual que carregou:
+        slot.textContent = i + 1;
+
         inventoryGrid.appendChild(slot);
     }
 }
