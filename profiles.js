@@ -122,12 +122,6 @@ function renderProfileCard(p, username) {
                 </div>
             </div>
 
-            <!-- Inventário do jogador (36 slots) -->
-            <section class="inventory-section">
-                <h2>Inventário</h2>
-                <div id="player-inventory" class="inventory-grid"></div>
-            </section>
-
             <div class="stats-grid">
                 <div class="stat-item">
                     <span class="label">Melhor Skill</span>
@@ -142,6 +136,12 @@ function renderProfileCard(p, username) {
                     <span class="value">${p.data_model.regions_model.region}</span>
                 </div>
             </div>
+
+            <!-- Inventário do jogador (36 slots) -->
+            <section class="inventory-section">
+                <h2>Inventário</h2>
+                <div id="player-inventory" class="inventory-grid"></div>
+            </section>
 
             <div class="skills-section">
                 <h4>Habilidades</h4>

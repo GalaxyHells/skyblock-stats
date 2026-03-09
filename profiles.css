@@ -244,11 +244,8 @@
 }
 
 .collections-section h4 {
-    font-size: 1.2rem;
-    color: #e0e0e0;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    /* Usa o estilo base de .profile-card-detail h4 */
+    margin-top: 10px; /* leve ajuste de respiro acima da linha */
 }
 
 .collections-grid {
@@ -413,4 +410,14 @@
     height: 40px;
     background: #1a1a1a;
     border: 1px solid #555;
+}
+
+/* Títulos dentro do card de perfil (Habilidades, Coleções, Inventário) */
+.profile-card-detail h2,
+.profile-card-detail h4 {
+    font-size: 1.3rem;
+    color: #e0e0e0;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
