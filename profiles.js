@@ -2,6 +2,7 @@ const API_KEY = "UNLIMITED_KEY"; // Chave fornecida no seu exemplo
 const container = document.getElementById('profiles-container');
 const searchBtn = document.getElementById('search-btn');
 const searchInput = document.getElementById('player-search');
+const inventoryGrid = document.getElementById('player-inventory');
 
 // Objeto para traduzir as chaves da API para nomes amigáveis
 const skillNames = {
@@ -35,6 +36,8 @@ async function fetchPlayerProfile(username) {
         const profile = data.profiles[activeIdx];
 
         renderProfileCard(profile, username);
+        // Após carregar o perfil, busca o inventário do jogador
+        fetchPlayerInventory(username);
     } catch (error) {
         container.innerHTML = `<div class="error">${error.message}</div>`;
     }
@@ -163,6 +166,60 @@ searchBtn.addEventListener('click', () => fetchPlayerProfile(searchInput.value))
 searchInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') fetchPlayerProfile(searchInput.value);
 });
+
+// ---------------- INVENTÁRIO (36 slots) ----------------
+async function fetchPlayerInventory(username) {
+    if (!inventoryGrid) return;
+
+    // Limpa e mostra estado de carregamento
+    inventoryGrid.innerHTML = '<div class="loader">Carregando inventário...</div>';
+
+    try {
+        const idParam = encodeURIComponent(username.toLowerCase() + ':0');
+        const response = await fetch(`https://skyapi.onrender.com/skyblock/player/inventories?id=${idParam}&key=${API_KEY}`);
+        if (!response.ok) throw new Error('Erro ao buscar inventário');
+
+        const data = await response.json();
+        // A API retorna uma string JSON dentro da chave PLAYER_INVENTORY
+        const playerInvRaw = data.PLAYER_INVENTORY;
+        if (!playerInvRaw) {
+            renderEmptyInventory();
+            return;
+        }
+
+        let parsed;
+        try {
+            parsed = JSON.parse(playerInvRaw);
+        } catch (e) {
+            // Caso a estrutura mude ou falhe o parse, ainda mostramos o grid vazio
+            renderEmptyInventory();
+            return;
+        }
+
+        const size = parsed.size || 36;
+        renderInventoryGrid(size);
+    } catch (e) {
+        console.error(e);
+        renderEmptyInventory();
+    }
+}
+
+function renderInventoryGrid(size) {
+    if (!inventoryGrid) return;
+    const slots = size || 36;
+    inventoryGrid.innerHTML = '';
+
+    for (let i = 0; i < slots; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'inv-slot';
+        slot.dataset.slot = i;
+        inventoryGrid.appendChild(slot);
+    }
+}
+
+function renderEmptyInventory() {
+    renderInventoryGrid(36);
+}
 
 // Carrega perfil automaticamente se vier ?user=nickname na URL
 (function autoLoadFromQuery() {
