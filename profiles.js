@@ -171,6 +171,7 @@ searchInput.addEventListener('keypress', (e) => {
 async function fetchPlayerInventory(username) {
     if (!inventoryGrid) return;
 
+    // Limpa e mostra estado de carregamento
     inventoryGrid.innerHTML = '<div class="loader">Carregando inventário...</div>';
 
     try {
@@ -179,11 +180,13 @@ async function fetchPlayerInventory(username) {
             : "https://skyblock-stats.onrender.com";
 
         const idParam = encodeURIComponent(username.toLowerCase() + ':0');
-        // CHAMA O SEU BACKEND, NÃO o skyapi direto
         const response = await fetch(`${API_BASE}/inventories?id=${idParam}&key=${API_KEY}`);
         if (!response.ok) throw new Error('Erro ao buscar inventário');
 
         const data = await response.json();
+
+        // A API do Go apenas repassa o JSON original do skyapi
+        // PLAYER_INVENTORY é uma STRING contendo JSON
         const playerInvRaw = data.PLAYER_INVENTORY;
         if (!playerInvRaw) {
             renderEmptyInventory();
@@ -192,8 +195,9 @@ async function fetchPlayerInventory(username) {
 
         let parsed;
         try {
-            parsed = JSON.parse(playerInvRaw);
+            parsed = JSON.parse(playerInvRaw); // <- IMPORTANTÍSSIMO
         } catch (e) {
+            console.error("Erro ao parsear PLAYER_INVENTORY:", e);
             renderEmptyInventory();
             return;
         }
@@ -201,7 +205,7 @@ async function fetchPlayerInventory(username) {
         const size = parsed.size || 36;
         renderInventoryGrid(size);
     } catch (e) {
-        console.error(e);
+        console.error("Erro ao carregar inventário:", e);
         renderEmptyInventory();
     }
 }
