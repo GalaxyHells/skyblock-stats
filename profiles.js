@@ -171,16 +171,19 @@ searchInput.addEventListener('keypress', (e) => {
 async function fetchPlayerInventory(username) {
     if (!inventoryGrid) return;
 
-    // Limpa e mostra estado de carregamento
     inventoryGrid.innerHTML = '<div class="loader">Carregando inventário...</div>';
 
     try {
+        const API_BASE = window.location.hostname === "localhost"
+            ? "http://localhost:8080"
+            : "https://skyblock-stats.onrender.com";
+
         const idParam = encodeURIComponent(username.toLowerCase() + ':0');
-        const response = await fetch(`https://skyapi.onrender.com/skyblock/player/inventories?id=${idParam}&key=${API_KEY}`);
+        // CHAMA O SEU BACKEND, NÃO o skyapi direto
+        const response = await fetch(`${API_BASE}/inventories?id=${idParam}&key=${API_KEY}`);
         if (!response.ok) throw new Error('Erro ao buscar inventário');
 
         const data = await response.json();
-        // A API retorna uma string JSON dentro da chave PLAYER_INVENTORY
         const playerInvRaw = data.PLAYER_INVENTORY;
         if (!playerInvRaw) {
             renderEmptyInventory();
@@ -191,7 +194,6 @@ async function fetchPlayerInventory(username) {
         try {
             parsed = JSON.parse(playerInvRaw);
         } catch (e) {
-            // Caso a estrutura mude ou falhe o parse, ainda mostramos o grid vazio
             renderEmptyInventory();
             return;
         }

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"sort"
@@ -153,6 +154,36 @@ func getTopHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(scores[:limit])
 }
 
+func handleInventories(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	id := r.URL.Query().Get("id")
+	key := r.URL.Query().Get("key")
+	if id == "" || key == "" {
+		http.Error(w, "missing id or key", http.StatusBadRequest)
+		return
+	}
+
+	url := fmt.Sprintf("https://skyapi.onrender.com/skyblock/player/inventories?id=%s&key=%s", id, key)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		http.Error(w, "failed to call skyapi", http.StatusBadGateway)
+		return
+	}
+	defer resp.Body.Close()
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(resp.StatusCode)
+	io.Copy(w, resp.Body)
+}
+
 // --- MAIN ---
 
 func main() {
@@ -165,6 +196,7 @@ func main() {
 	http.HandleFunc("/profile", proxyHandler)
 	http.HandleFunc("/update-top", updateTopHandler)
 	http.HandleFunc("/top", getTopHandler)
+	http.HandleFunc("/inventories", handleInventories)
 
 	fmt.Printf("🚀 Servidor iniciado na porta %s\n", port)
 	fmt.Printf("📌 Rotas: /profile, /top, /update-top\n")
