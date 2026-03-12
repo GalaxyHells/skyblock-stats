@@ -1,13 +1,17 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"os"
-	"sort"
-	"sync"
-	"time"
+    "database/sql"
+    "encoding/json"
+    "fmt"
+    "log"
+    "net/http"
+    "os"
+    "strconv"
+    "sync"
+    "time"
+
+    _ "github.com/lib/pq"
 )
 
 // --- ESTRUTURAS ---
@@ -22,47 +26,88 @@ type ScoreRequest struct {
 	Level    int    `json:"level"`
 }
 
-const lbFileName = "leaderboard.json"
-
-var (
-	// Caches separados para Perfis e Inventários
-	profileCache   = make(map[string]CachedData)
-	inventoryCache = make(map[string]CachedData)
-	cacheMutex     sync.RWMutex
-
-	// Ranking (Leaderboard)
-	leaderboard = make(map[string]int)
-	lbMutex     sync.RWMutex
-)
-
 // --- PERSISTÊNCIA ---
 
-func saveLeaderboard() {
-	lbMutex.RLock()
-	data, err := json.MarshalIndent(leaderboard, "", "  ")
-	lbMutex.RUnlock()
+var (
+    // Caches separados para Perfis e Inventários
+    profileCache   = make(map[string]CachedData)
+    inventoryCache = make(map[string]CachedData)
+    cacheMutex     sync.RWMutex
 
-	if err != nil {
-		fmt.Println("❌ Erro ao formatar leaderboard:", err)
-		return
-	}
+    // Conexão com o banco
+    db *sql.DB
+)
 
-	_ = os.WriteFile(lbFileName, data, 0644)
+func initDB() {
+    dsn := os.Getenv("DATABASE_URL")
+    if dsn == "" {
+        log.Fatal("DATABASE_URL não configurada")
+    }
+
+    var err error
+    db, err = sql.Open("postgres", dsn)
+    if err != nil {
+        log.Fatalf("Erro ao abrir conexão com o banco: %v", err)
+    }
+
+    // Opcional: testar conexão
+    if err := db.Ping(); err != nil {
+        log.Fatalf("Erro ao conectar no banco: %v", err)
+    }
+
+    // Criar tabela se não existir
+    createTable := `
+        CREATE TABLE IF NOT EXISTS leaderboard (
+            username TEXT PRIMARY KEY,
+            level    INT NOT NULL
+        );
+    `
+    if _, err := db.Exec(createTable); err != nil {
+        log.Fatalf("Erro ao criar tabela leaderboard: %v", err)
+    }
+
+    log.Println("✅ Banco de dados inicializado e tabela leaderboard pronta")
 }
 
-func loadLeaderboard() {
-	data, err := os.ReadFile(lbFileName)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			fmt.Println("❌ Erro ao ler ranking:", err)
-		}
-		return
-	}
+func updateScoreDB(username string, level int) error {
+    // Usa UPSERT: se já existir, atualiza somente se o novo level for maior
+    query := `
+        INSERT INTO leaderboard (username, level)
+        VALUES ($1, $2)
+        ON CONFLICT (username)
+        DO UPDATE
+        SET level = GREATEST(leaderboard.level, EXCLUDED.level);
+    `
+    _, err := db.Exec(query, username, level)
+    return err
+}
 
-	lbMutex.Lock()
-	_ = json.Unmarshal(data, &leaderboard)
-	lbMutex.Unlock()
-	fmt.Printf("✅ Ranking carregado: %d jogadores\n", len(leaderboard))
+func getTopScoresDB(limit int) ([]ScoreRequest, error) {
+    query := `
+        SELECT username, level
+        FROM leaderboard
+        ORDER BY level DESC
+        LIMIT $1;
+    `
+    rows, err := db.Query(query, limit)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var scores []ScoreRequest
+    for rows.Next() {
+        var s ScoreRequest
+        if err := rows.Scan(&s.Username, &s.Level); err != nil {
+            return nil, err
+        }
+        scores = append(scores, s)
+    }
+    if err := rows.Err(); err != nil {
+        return nil, err
+    }
+
+    return scores, nil
 }
 
 // --- HELPERS ---
@@ -178,66 +223,74 @@ func handleInventories(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateTopHandler(w http.ResponseWriter, r *http.Request) {
-	if setupCORS(&w, r) {
-		return
-	}
+    if setupCORS(&w, r) {
+        return
+    }
 
-	var req ScoreRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err == nil && req.Username != "" {
-		lbMutex.Lock()
-		updated := false
-		if current, exists := leaderboard[req.Username]; !exists || req.Level > current {
-			leaderboard[req.Username] = req.Level
-			updated = true
-		}
-		lbMutex.Unlock()
+    if r.Method != http.MethodPost {
+        http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+        return
+    }
 
-		if updated {
-			fmt.Printf("🏆 Novo recorde: %s (Nível %d)\n", req.Username, req.Level)
-			saveLeaderboard()
-		}
-		w.WriteHeader(http.StatusOK)
-	}
+    var req ScoreRequest
+    if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Username == "" {
+        http.Error(w, "JSON inválido ou username ausente", http.StatusBadRequest)
+        return
+    }
+
+    if err := updateScoreDB(req.Username, req.Level); err != nil {
+        log.Printf("Erro ao atualizar score no banco: %v", err)
+        http.Error(w, "Erro ao salvar no banco", http.StatusInternalServerError)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
 func getTopHandler(w http.ResponseWriter, r *http.Request) {
-	if setupCORS(&w, r) {
-		return
-	}
+    if setupCORS(&w, r) {
+        return
+    }
 
-	lbMutex.RLock()
-	var scores []ScoreRequest
-	for k, v := range leaderboard {
-		scores = append(scores, ScoreRequest{Username: k, Level: v})
-	}
-	lbMutex.RUnlock()
+    // Limite opcional via query param, padrão 10
+    limit := 10
+    if l := r.URL.Query().Get("limit"); l != "" {
+        if n, err := strconv.Atoi(l); err == nil && n > 0 && n <= 100 {
+            limit = n
+        }
+    }
 
-	sort.Slice(scores, func(i, j int) bool { return scores[i].Level > scores[j].Level })
+    scores, err := getTopScoresDB(limit)
+    if err != nil {
+        log.Printf("Erro ao obter top scores: %v", err)
+        http.Error(w, "Erro ao consultar o banco", http.StatusInternalServerError)
+        return
+    }
 
-	limit := 10
-	if len(scores) < 10 {
-		limit = len(scores)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(scores[:limit])
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(scores)
 }
 
 // --- MAIN ---
 
 func main() {
-	loadLeaderboard()
+    initDB()
+    defer db.Close()
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+    port := os.Getenv("PORT")
+    if port == "" {
+        port = "8080"
+    }
 
-	http.HandleFunc("/profile", proxyHandler)
-	http.HandleFunc("/inventories", handleInventories)
-	http.HandleFunc("/update-top", updateTopHandler)
-	http.HandleFunc("/top", getTopHandler)
+    http.HandleFunc("/profile", proxyHandler)
+    http.HandleFunc("/inventories", handleInventories)
+    http.HandleFunc("/update-top", updateTopHandler)
+    http.HandleFunc("/top", getTopHandler)
 
-	fmt.Printf("🚀 API Rodando na porta %s\n", port)
-	http.ListenAndServe(":"+port, nil)
+    fmt.Printf("🚀 API Rodando na porta %s\n", port)
+    if err := http.ListenAndServe(":"+port, nil); err != nil {
+        log.Fatalf("Erro ao iniciar servidor: %v", err)
+    }
 }
