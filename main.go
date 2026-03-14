@@ -1,17 +1,17 @@
 package main
 
 import (
-    "database/sql"
-    "encoding/json"
-    "fmt"
-    "log"
-    "net/http"
-    "os"
-    "strconv"
-    "sync"
-    "time"
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"strconv"
+	"sync"
+	"time"
 
-    _ "github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 // --- ESTRUTURAS ---
@@ -29,85 +29,85 @@ type ScoreRequest struct {
 // --- PERSISTÊNCIA ---
 
 var (
-    // Caches separados para Perfis e Inventários
-    profileCache   = make(map[string]CachedData)
-    inventoryCache = make(map[string]CachedData)
-    cacheMutex     sync.RWMutex
+	// Caches separados para Perfis e Inventários
+	profileCache   = make(map[string]CachedData)
+	inventoryCache = make(map[string]CachedData)
+	cacheMutex     sync.RWMutex
 
-    // Conexão com o banco
-    db *sql.DB
+	// Conexão com o banco
+	db *sql.DB
 )
 
 func initDB() {
-    dsn := os.Getenv("DATABASE_URL")
-    if dsn == "" {
-        log.Fatal("DATABASE_URL não configurada")
-    }
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		log.Fatal("DATABASE_URL não configurada")
+	}
 
-    var err error
-    db, err = sql.Open("postgres", dsn)
-    if err != nil {
-        log.Fatalf("Erro ao abrir conexão com o banco: %v", err)
-    }
+	var err error
+	db, err = sql.Open("postgres", dsn)
+	if err != nil {
+		log.Fatalf("Erro ao abrir conexão com o banco: %v", err)
+	}
 
-    // Opcional: testar conexão
-    if err := db.Ping(); err != nil {
-        log.Fatalf("Erro ao conectar no banco: %v", err)
-    }
+	// Opcional: testar conexão
+	if err := db.Ping(); err != nil {
+		log.Fatalf("Erro ao conectar no banco: %v", err)
+	}
 
-    // Criar tabela se não existir
-    createTable := `
+	// Criar tabela se não existir
+	createTable := `
         CREATE TABLE IF NOT EXISTS leaderboard (
             username TEXT PRIMARY KEY,
             level    INT NOT NULL
         );
     `
-    if _, err := db.Exec(createTable); err != nil {
-        log.Fatalf("Erro ao criar tabela leaderboard: %v", err)
-    }
+	if _, err := db.Exec(createTable); err != nil {
+		log.Fatalf("Erro ao criar tabela leaderboard: %v", err)
+	}
 
-    log.Println("✅ Banco de dados inicializado e tabela leaderboard pronta")
+	log.Println("✅ Banco de dados inicializado e tabela leaderboard pronta")
 }
 
 func updateScoreDB(username string, level int) error {
-    // Usa UPSERT: se já existir, atualiza somente se o novo level for maior
-    query := `
+	// Usa UPSERT: se já existir, atualiza somente se o novo level for maior
+	query := `
         INSERT INTO leaderboard (username, level)
         VALUES ($1, $2)
         ON CONFLICT (username)
         DO UPDATE
         SET level = GREATEST(leaderboard.level, EXCLUDED.level);
     `
-    _, err := db.Exec(query, username, level)
-    return err
+	_, err := db.Exec(query, username, level)
+	return err
 }
 
 func getTopScoresDB(limit int) ([]ScoreRequest, error) {
-    query := `
+	query := `
         SELECT username, level
         FROM leaderboard
         ORDER BY level DESC
         LIMIT $1;
     `
-    rows, err := db.Query(query, limit)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
+	rows, err := db.Query(query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-    var scores []ScoreRequest
-    for rows.Next() {
-        var s ScoreRequest
-        if err := rows.Scan(&s.Username, &s.Level); err != nil {
-            return nil, err
-        }
-        scores = append(scores, s)
-    }
-    if err := rows.Err(); err != nil {
-        return nil, err
-    }
+	var scores []ScoreRequest
+	for rows.Next() {
+		var s ScoreRequest
+		if err := rows.Scan(&s.Username, &s.Level); err != nil {
+			return nil, err
+		}
+		scores = append(scores, s)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
-    return scores, nil
+	return scores, nil
 }
 
 // --- HELPERS ---
@@ -223,74 +223,74 @@ func handleInventories(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateTopHandler(w http.ResponseWriter, r *http.Request) {
-    if setupCORS(&w, r) {
-        return
-    }
+	if setupCORS(&w, r) {
+		return
+	}
 
-    if r.Method != http.MethodPost {
-        http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
-        return
-    }
+	if r.Method != http.MethodPost {
+		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+		return
+	}
 
-    var req ScoreRequest
-    if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Username == "" {
-        http.Error(w, "JSON inválido ou username ausente", http.StatusBadRequest)
-        return
-    }
+	var req ScoreRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Username == "" {
+		http.Error(w, "JSON inválido ou username ausente", http.StatusBadRequest)
+		return
+	}
 
-    if err := updateScoreDB(req.Username, req.Level); err != nil {
-        log.Printf("Erro ao atualizar score no banco: %v", err)
-        http.Error(w, "Erro ao salvar no banco", http.StatusInternalServerError)
-        return
-    }
+	if err := updateScoreDB(req.Username, req.Level); err != nil {
+		log.Printf("Erro ao atualizar score no banco: %v", err)
+		http.Error(w, "Erro ao salvar no banco", http.StatusInternalServerError)
+		return
+	}
 
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusOK)
-    json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
 func getTopHandler(w http.ResponseWriter, r *http.Request) {
-    if setupCORS(&w, r) {
-        return
-    }
+	if setupCORS(&w, r) {
+		return
+	}
 
-    // Limite opcional via query param, padrão 10
-    limit := 10
-    if l := r.URL.Query().Get("limit"); l != "" {
-        if n, err := strconv.Atoi(l); err == nil && n > 0 && n <= 100 {
-            limit = n
-        }
-    }
+	// Limite opcional via query param, padrão 10
+	limit := 10
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if n, err := strconv.Atoi(l); err == nil && n > 0 && n <= 100 {
+			limit = n
+		}
+	}
 
-    scores, err := getTopScoresDB(limit)
-    if err != nil {
-        log.Printf("Erro ao obter top scores: %v", err)
-        http.Error(w, "Erro ao consultar o banco", http.StatusInternalServerError)
-        return
-    }
+	scores, err := getTopScoresDB(limit)
+	if err != nil {
+		log.Printf("Erro ao obter top scores: %v", err)
+		http.Error(w, "Erro ao consultar o banco", http.StatusInternalServerError)
+		return
+	}
 
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(scores)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(scores)
 }
 
 // --- MAIN ---
 
 func main() {
-    initDB()
-    defer db.Close()
+	initDB()
+	defer db.Close()
 
-    port := os.Getenv("PORT")
-    if port == "" {
-        port = "8080"
-    }
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
-    http.HandleFunc("/profile", proxyHandler)
-    http.HandleFunc("/inventories", handleInventories)
-    http.HandleFunc("/update-top", updateTopHandler)
-    http.HandleFunc("/top", getTopHandler)
+	http.HandleFunc("/profile", proxyHandler)
+	http.HandleFunc("/inventories", handleInventories)
+	http.HandleFunc("/update-top", updateTopHandler)
+	http.HandleFunc("/top", getTopHandler)
 
-    fmt.Printf("🚀 API Rodando na porta %s\n", port)
-    if err := http.ListenAndServe(":"+port, nil); err != nil {
-        log.Fatalf("Erro ao iniciar servidor: %v", err)
-    }
+	fmt.Printf("🚀 API Rodando na porta %s\n", port)
+	if err := http.ListenAndServe(":"+port, nil); err != nil {
+		log.Fatalf("Erro ao iniciar servidor: %v", err)
+	}
 }
