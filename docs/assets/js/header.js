@@ -4,7 +4,7 @@
     if (!placeholder) return;
 
     try {
-        const res = await fetch('../html/header.html', { cache: 'no-cache' });
+        const res = await fetch('assets/html/header.html', { cache: 'no-cache' });
         if (!res.ok) throw new Error('Erro ao carregar header');
         const html = await res.text();
         placeholder.innerHTML = html;
