@@ -4,7 +4,8 @@
     if (!placeholder) return;
 
     try {
-        const res = await fetch('header.html', { cache: 'no-cache' });
+        const basePath = window.location.pathname.includes('/assets/html/') ? '' : 'assets/html/';
+        const res = await fetch(basePath + 'header.html', { cache: 'no-cache' });
         if (!res.ok) throw new Error('Erro ao carregar header');
         const html = await res.text();
         placeholder.innerHTML = html;
