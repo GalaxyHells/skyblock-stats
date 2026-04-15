@@ -284,10 +284,10 @@ func main() {
 		port = "8080"
 	}
 
-	http.HandleFunc("/profile", proxyHandler)
-	http.HandleFunc("/inventories", handleInventories)
-	http.HandleFunc("/update-top", updateTopHandler)
-	http.HandleFunc("/top", getTopHandler)
+	http.HandleFunc("/assets/html/profile", proxyHandler)
+	http.HandleFunc("/assets/html/inventories", handleInventories)
+	http.HandleFunc("/assets/html/update-top", updateTopHandler)
+	http.HandleFunc("/assets/html/top", getTopHandler)
 
 	fmt.Printf("🚀 API Rodando na porta %s\n", port)
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
