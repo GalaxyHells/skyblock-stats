@@ -1,6 +1,6 @@
 // footer.js - carrega o footer em todas as páginas
 
-fetch('footer.html')
+fetch('assets/html/footer.html')
   .then(response => response.text())
   .then(html => {
     const placeholder = document.getElementById('site-footer');
